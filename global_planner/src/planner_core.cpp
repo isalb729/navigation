@@ -1,40 +1,3 @@
-/*********************************************************************
- *
- * Software License Agreement (BSD License)
- *
- *  Copyright (c) 2008, 2013, Willow Garage, Inc.
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- *
- * Author: Eitan Marder-Eppstein
- *         David V. Lu!!
- *********************************************************************/
 #include <global_planner/planner_core.h>
 #include <pluginlib/class_list_macros.h>
 #include <costmap_2d/cost_values.h>
@@ -98,9 +61,10 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
         ros::NodeHandle private_nh("~/" + name);
         costmap_ = costmap;
         frame_id_ = frame_id;
-
+        // size of the map
         unsigned int cx = costmap->getSizeInCellsX(), cy = costmap->getSizeInCellsY();
-
+        // name, value, default value
+        // get the param value(not set)
         private_nh.param("old_navfn_behavior", old_navfn_behavior_, false);
         if(!old_navfn_behavior_)
             convert_offset_ = 0.5;
@@ -109,6 +73,7 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
 
         bool use_quadratic;
         private_nh.param("use_quadratic", use_quadratic, true);
+        // two different ways to calculate the costs of different point
         if (use_quadratic)
             p_calc_ = new QuadraticCalculator(cx, cy);
         else
@@ -116,8 +81,7 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
 
         bool use_dijkstra;
         private_nh.param("use_dijkstra", use_dijkstra, true);
-        if (use_dijkstra)
-        {
+        if (use_dijkstra) {
             DijkstraExpansion* de = new DijkstraExpansion(p_calc_, cx, cy);
             if(!old_navfn_behavior_)
                 de->setPreciseStart(true);
@@ -159,6 +123,7 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
 
 }
 
+// ?
 void GlobalPlanner::reconfigureCB(global_planner::GlobalPlannerConfig& config, uint32_t level) {
     planner_->setLethalCost(config.lethal_cost);
     path_maker_->setLethalCost(config.lethal_cost);
@@ -169,6 +134,7 @@ void GlobalPlanner::reconfigureCB(global_planner::GlobalPlannerConfig& config, u
     orientation_filter_->setWindowSize(config.orientation_window_size);
 }
 
+// free means it's not an obstacle or could be potential?
 void GlobalPlanner::clearRobotCell(const geometry_msgs::PoseStamped& global_pose, unsigned int mx, unsigned int my) {
     if (!initialized_) {
         ROS_ERROR(
@@ -182,10 +148,8 @@ void GlobalPlanner::clearRobotCell(const geometry_msgs::PoseStamped& global_pose
 
 bool GlobalPlanner::makePlanService(nav_msgs::GetPlan::Request& req, nav_msgs::GetPlan::Response& resp) {
     makePlan(req.start, req.goal, resp.plan.poses);
-
     resp.plan.header.stamp = ros::Time::now();
     resp.plan.header.frame_id = frame_id_;
-
     return true;
 }
 
@@ -223,32 +187,25 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
                 "This planner has not been initialized yet, but it is being used, please call initialize() before use");
         return false;
     }
-
     //clear the plan, just in case
     plan.clear();
-
     ros::NodeHandle n;
     std::string global_frame = frame_id_;
-
     //until tf can handle transforming things that are way in the past... we'll require the goal to be in our global frame
     if (goal.header.frame_id != global_frame) {
         ROS_ERROR(
                 "The goal pose passed to this planner must be in the %s frame.  It is instead in the %s frame.", global_frame.c_str(), goal.header.frame_id.c_str());
         return false;
     }
-
     if (start.header.frame_id != global_frame) {
         ROS_ERROR(
                 "The start pose passed to this planner must be in the %s frame.  It is instead in the %s frame.", global_frame.c_str(), start.header.frame_id.c_str());
         return false;
     }
-
     double wx = start.pose.position.x;
     double wy = start.pose.position.y;
-
     unsigned int start_x_i, start_y_i, goal_x_i, goal_y_i;
     double start_x, start_y, goal_x, goal_y;
-
     if (!costmap_->worldToMap(wx, wy, start_x_i, start_y_i)) {
         ROS_WARN(
                 "The robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?");
@@ -260,10 +217,8 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
     }else{
         worldToMap(wx, wy, start_x, start_y);
     }
-
     wx = goal.pose.position.x;
     wy = goal.pose.position.y;
-
     if (!costmap_->worldToMap(wx, wy, goal_x_i, goal_y_i)) {
         ROS_WARN_THROTTLE(1.0,
                 "The goal sent to the global planner is off the global costmap. Planning will always fail to this goal.");
@@ -275,29 +230,24 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
     }else{
         worldToMap(wx, wy, goal_x, goal_y);
     }
-
     //clear the starting cell within the costmap because we know it can't be an obstacle
     clearRobotCell(start, start_x_i, start_y_i);
-
     int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
-
     //make sure to resize the underlying array that Navfn uses
     p_calc_->setSize(nx, ny);
     planner_->setSize(nx, ny);
     path_maker_->setSize(nx, ny);
-    potential_array_ = new float[nx * ny];
 
+    potential_array_ = new float[nx * ny];
+    // ?
     if(outline_map_)
         outlineMap(costmap_->getCharMap(), nx, ny, costmap_2d::LETHAL_OBSTACLE);
-
     bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), start_x, start_y, goal_x, goal_y,
                                                     nx * ny * 2, potential_array_);
-
     if(!old_navfn_behavior_)
         planner_->clearEndpoint(costmap_->getCharMap(), potential_array_, goal_x_i, goal_y_i, 2);
     if(publish_potential_)
         publishPotential(potential_array_);
-
     if (found_legal) {
         //extract the plan
         if (getPlanFromPotential(start_x, start_y, goal_x, goal_y, goal, plan)) {
@@ -311,10 +261,8 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
     }else{
         ROS_ERROR("Failed to get a plan.");
     }
-
     // add orientations if needed
     orientation_filter_->processPath(start, plan);
-
     //publish the plan for visualization purposes
     publishPlan(plan);
     delete[] potential_array_;
@@ -351,19 +299,14 @@ bool GlobalPlanner::getPlanFromPotential(double start_x, double start_y, double 
                 "This planner has not been initialized yet, but it is being used, please call initialize() before use");
         return false;
     }
-
     std::string global_frame = frame_id_;
-
     //clear the plan, just in case
     plan.clear();
-
     std::vector<std::pair<float, float> > path;
-
     if (!path_maker_->getPath(potential_array_, start_x, start_y, goal_x, goal_y, path)) {
         ROS_ERROR("NO PATH!");
         return false;
     }
-
     ros::Time plan_time = ros::Time::now();
     for (int i = path.size() -1; i>=0; i--) {
         std::pair<float, float> point = path[i];
