@@ -1,10 +1,3 @@
-/*
- * prefer_forward_cost_function.cpp
- *
- *  Created on: Apr 4, 2012
- *      Author: tkruse
- */
-
 #include <base_local_planner/prefer_forward_cost_function.h>
 
 #include <math.h>

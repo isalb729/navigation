@@ -1,10 +1,3 @@
-/*
- * twirling_cost_function.cpp
- *
- *  Created on: Apr 20, 2016
- *      Author: Morgan Quigley
- */
-
 #include <base_local_planner/twirling_cost_function.h>
 
 #include <math.h>

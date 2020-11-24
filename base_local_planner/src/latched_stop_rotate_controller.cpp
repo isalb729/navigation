@@ -1,10 +1,3 @@
-/*
- * latched_stop_rotate_controller.cpp
- *
- *  Created on: Apr 16, 2012
- *      Author: tkruse
- */
-
 #include <base_local_planner/latched_stop_rotate_controller.h>
 
 #include <cmath>

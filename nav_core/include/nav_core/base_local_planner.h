@@ -14,7 +14,7 @@ namespace nav_core {
   class BaseLocalPlanner{
     public:
       /**
-       * @brief  Given the current position, orientation, and velocity of the robot, compute velocity commands(relative to the base) to send to the base
+       * @brief Given the current position, orientation, and velocity of the robot, compute velocity commands(relative to the base) to send to the base
        * @param cmd_vel Will be filled with the velocity command to be passed to the robot base
        * @return True if a valid velocity command was found, false otherwise
        */
