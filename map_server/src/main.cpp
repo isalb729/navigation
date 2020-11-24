@@ -25,8 +25,7 @@ void operator >> (const YAML::Node& node, T& i)
 }
 #endif
 
-class MapServer
-{
+class MapServer {
   public:
     /** Trivial constructor */
     MapServer(const std::string& fname, double res)
@@ -146,7 +145,7 @@ class MapServer
           exit(-1);
       }
       // To make sure get a consistent time in simulation
-      ros::Time::waitForValid();
+      ros::Time::waitForValid();`
       map_resp_.map.info.map_load_time = ros::Time::now();
       map_resp_.map.header.frame_id = frame_id;
       map_resp_.map.header.stamp = ros::Time::now();
@@ -202,8 +201,7 @@ class MapServer
 
 };
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   ros::init(argc, argv, "map_server", ros::init_options::AnonymousName);
   if(argc != 3 && argc != 2)
   {

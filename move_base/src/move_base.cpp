@@ -29,8 +29,10 @@ namespace move_base {
 
     //get some parameters that will be global to the move base node
     std::string global_planner, local_planner;
+    // get the mode of global and local planner
     private_nh.param("base_global_planner", global_planner, std::string("navfn/NavfnROS"));
     private_nh.param("base_local_planner", local_planner, std::string("base_local_planner/TrajectoryPlannerROS"));
+
     private_nh.param("global_costmap/robot_base_frame", robot_base_frame_, std::string("base_link"));
     private_nh.param("global_costmap/global_frame", global_frame_, std::string("map"));
     private_nh.param("planner_frequency", planner_frequency_, 0.0);
@@ -527,45 +529,41 @@ namespace move_base {
     planner_cond_.notify_one();
   }
 
-  void MoveBase::planThread(){
+
+// Important!!!
+  void MoveBase::planThread() {
     ROS_DEBUG_NAMED("move_base_plan_thread","Starting planner thread...");
     ros::NodeHandle n;
     ros::Timer timer;
     bool wait_for_wake = false;
     boost::unique_lock<boost::recursive_mutex> lock(planner_mutex_);
-    while(n.ok()){
+    while(n.ok()) {
       //check if we should run the planner (the mutex is locked)
-      while(wait_for_wake || !runPlanner_){
+      while(wait_for_wake || !runPlanner_) {
         //if we should not be running the planner then suspend this thread
         ROS_DEBUG_NAMED("move_base_plan_thread","Planner thread is suspending");
         planner_cond_.wait(lock);
         wait_for_wake = false;
       }
       ros::Time start_time = ros::Time::now();
-
-      //time to plan! get a copy of the goal and unlock the mutex
+      // time to plan! get a copy of the goal and unlock the mutex
       geometry_msgs::PoseStamped temp_goal = planner_goal_;
       lock.unlock();
       ROS_DEBUG_NAMED("move_base_plan_thread","Planning...");
-
       //run planner
       planner_plan_->clear();
       bool gotPlan = n.ok() && makePlan(temp_goal, *planner_plan_);
-
       if(gotPlan){
         ROS_DEBUG_NAMED("move_base_plan_thread","Got Plan with %zu points!", planner_plan_->size());
         //pointer swap the plans under mutex (the controller will pull from latest_plan_)
         std::vector<geometry_msgs::PoseStamped>* temp_plan = planner_plan_;
-
         lock.lock();
         planner_plan_ = latest_plan_;
         latest_plan_ = temp_plan;
         last_valid_plan_ = ros::Time::now();
         planning_retries_ = 0;
         new_global_plan_ = true;
-
         ROS_DEBUG_NAMED("move_base_plan_thread","Generated a plan from the base_global_planner");
-
         //make sure we only start the controller if we still haven't reached the goal
         if(runPlanner_)
           state_ = CONTROLLING;
@@ -577,7 +575,6 @@ namespace move_base {
       else if(state_==PLANNING){
         ROS_DEBUG_NAMED("move_base_plan_thread","No Plan...");
         ros::Time attempt_end = last_valid_plan_ + ros::Duration(planner_patience_);
-
         //check if we've tried to make a plan for over our time limit or our maximum number of retries
         //issue #496: we stop planning when one of the conditions is true, but if max_planning_retries_
         //is negative (the default), it is just ignored and we have the same behavior as ever
@@ -591,13 +588,10 @@ namespace move_base {
           publishZeroVelocity();
           recovery_trigger_ = PLANNING_R;
         }
-
         lock.unlock();
       }
-
       //take the mutex for the next iteration
       lock.lock();
-
       //setup sleep interface if needed
       if(planner_frequency_ > 0){
         ros::Duration sleep_time = (start_time + ros::Duration(1.0/planner_frequency_)) - ros::Time::now();
@@ -609,8 +603,7 @@ namespace move_base {
     }
   }
 
-  void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_goal)
-  {
+  void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_goal) {
     if(!isQuaternionValid(move_base_goal->target_pose.pose.orientation)){
       as_->setAborted(move_base_msgs::MoveBaseResult(), "Aborting on goal because it was sent with an invalid quaternion");
       return;
@@ -756,8 +749,7 @@ namespace move_base {
     return;
   }
 
-  double MoveBase::distance(const geometry_msgs::PoseStamped& p1, const geometry_msgs::PoseStamped& p2)
-  {
+  double MoveBase::distance(const geometry_msgs::PoseStamped& p1, const geometry_msgs::PoseStamped& p2) {
     return hypot(p1.pose.position.x - p2.pose.position.x, p1.pose.position.y - p2.pose.position.y);
   }
 
@@ -906,7 +898,6 @@ namespace move_base {
           }
         }
         }
-
         break;
 
       //we'll try to clear out space with any user-provided recovery behaviors

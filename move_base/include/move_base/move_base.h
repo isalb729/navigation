@@ -1,39 +1,4 @@
-/*********************************************************************
-*
-* Software License Agreement (BSD License)
-*
-*  Copyright (c) 2008, Willow Garage, Inc.
-*  All rights reserved.
-*
-*  Redistribution and use in source and binary forms, with or without
-*  modification, are permitted provided that the following conditions
-*  are met:
-*
-*   * Redistributions of source code must retain the above copyright
-*     notice, this list of conditions and the following disclaimer.
-*   * Redistributions in binary form must reproduce the above
-*     copyright notice, this list of conditions and the following
-*     disclaimer in the documentation and/or other materials provided
-*     with the distribution.
-*   * Neither the name of the Willow Garage nor the names of its
-*     contributors may be used to endorse or promote products derived
-*     from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-*  POSSIBILITY OF SUCH DAMAGE.
-*
-* Author: Eitan Marder-Eppstein
-*********************************************************************/
+
 #ifndef NAV_MOVE_BASE_ACTION_H_
 #define NAV_MOVE_BASE_ACTION_H_
 
@@ -101,7 +66,6 @@ namespace move_base {
        * @return True if processing of the goal is done, false otherwise
        */
       bool executeCycle(geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& global_plan);
-
     private:
       /**
        * @brief  A service call that clears the costmaps of obstacles
@@ -110,7 +74,6 @@ namespace move_base {
        * @return True if the service call succeeds, false otherwise
        */
       bool clearCostmapsService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp);
-
       /**
        * @brief  A service call that can be made when the action is inactive that will return a plan
        * @param  req The goal request
@@ -118,7 +81,6 @@ namespace move_base {
        * @return True if planning succeeded, false otherwise
        */
       bool planService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::Response &resp);
-
       /**
        * @brief  Make a new global plan
        * @param  goal The goal to plan to
@@ -126,31 +88,26 @@ namespace move_base {
        * @return  True if planning succeeds, false otherwise
        */
       bool makePlan(const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
-
       /**
        * @brief  Load the recovery behaviors for the navigation stack from the parameter server
        * @param node The ros::NodeHandle to be used for loading parameters 
        * @return True if the recovery behaviors were loaded successfully, false otherwise
        */
       bool loadRecoveryBehaviors(ros::NodeHandle node);
-
       /**
        * @brief  Loads the default recovery behaviors for the navigation stack
        */
       void loadDefaultRecoveryBehaviors();
-
       /**
        * @brief  Clears obstacles within a window around the robot
        * @param size_x The x size of the window
        * @param size_y The y size of the window
        */
       void clearCostmapWindows(double size_x, double size_y);
-
       /**
        * @brief  Publishes a velocity command of zero to the base
        */
       void publishZeroVelocity();
-
       /**
        * @brief  Reset the state of the move_base action and send a zero velocity command to the base
        */
